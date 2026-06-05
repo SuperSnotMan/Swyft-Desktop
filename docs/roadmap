@@ -1,14 +1,180 @@
-# Roadmap
+SWYFTDESKTOP ROADMAP
+====================
 
-Phase 1
-- Learn Kotlin
-- Build Android app
+PROJECT OVERVIEW
+SwyftDesktop is a distributed computing system consisting of a mobile control layer and a lightweight desktop environment. The system enables a phone to act as a controller and runtime bridge for a custom desktop UI that can operate on low-spec devices while preserving phone usability.
 
-Phase 2
-- Shizuku integration
+Core principles:
+- Phone remains fully usable during operation
+- Desktop environment runs as a lightweight rendered shell
+- UI and input are separated from execution logic
+- Cross-device communication enables real-time interaction
+- System is modular, themeable, and platform-adaptive
 
-Phase 3
-- Desktop controller
+------------------------------------------------------------
 
-Phase 4
-- Widgets and taskbar
+PHASE 1 — MOBILE CORE LAUNCHER
+Goal: Stable Android control hub and app interface layer
+
+Features:
+- Grid-based app drawer system
+- Reliable app discovery via PackageManager
+- AppTile UI component system
+- Stable app launching via action dispatcher
+- Fixes for package visibility limitations
+- Basic sorting and layout management
+
+Outcome:
+Functional mobile control hub for system interaction
+
+------------------------------------------------------------
+
+PHASE 2 — MOBILE UI SYSTEM + WIDGET ENGINE
+Goal: Build modular mobile interface system
+
+Features:
+- Home screen panel system
+- Widget framework:
+  - Clock widget
+  - Shortcuts widget
+  - System information widgets
+- Reusable UI components:
+  - AppTile
+  - WidgetContainer
+- Theme abstraction layer:
+  - Material You (Android renderer)
+  - Future Fluent mapping support
+- Layout system separation from logic
+
+Outcome:
+Mobile UI becomes modular, extensible, and theme-driven
+
+------------------------------------------------------------
+
+PHASE 3 — ACTION + EVENT ARCHITECTURE
+Goal: Centralise all system behaviour into a unified action model
+
+Core system:
+- Action dispatcher (single execution entry point)
+- Event-driven UI architecture
+
+Action types:
+- LaunchApp
+- OpenWidget
+- OpenAppDrawer
+- SystemCommand
+- Future remote actions (PC bridge)
+
+Outcome:
+UI becomes declarative; logic is centralised and reusable
+
+------------------------------------------------------------
+
+PHASE 4 — INPUT SYSTEM (PHONE AS CONTROLLER)
+Goal: Transform mobile device into input and control surface
+
+Features:
+- Touchpad mode for pointer control
+- Gesture system:
+  - Tap → left click
+  - Long press → right click
+  - Drag → scroll / move
+- Keyboard input mode
+- Real-time event streaming protocol
+
+Output protocol:
+- MOVE x y
+- CLICK LEFT / RIGHT
+- SCROLL delta
+- KEY press/release
+
+Outcome:
+Phone functions as remote input device for desktop environment
+
+------------------------------------------------------------
+
+PHASE 5 — DESKTOP ENVIRONMENT (CORE SYSTEM)
+Goal: Lightweight, custom desktop shell running on PC or tablet-class devices
+
+This is the primary desktop experience layer, not an extension.
+
+Features:
+- Custom desktop UI shell (Swyft Desktop Environment)
+- Window or panel-based layout system
+- App rendering layer (apps appear as managed sessions)
+- Custom taskbar system:
+  - active apps
+  - system controls
+  - quick actions
+- Widget support on desktop
+- Dynamic layout engine (adapts to screen size and performance)
+- Low overhead design for older hardware
+
+UI design direction:
+- Fluent UI-inspired design for Windows environments
+- Clean, modular panels
+- Adaptive density scaling for low-end devices
+
+Outcome:
+Fully custom desktop environment independent of OS shell
+
+------------------------------------------------------------
+
+PHASE 6 — DESKTOP CLIENT (RENDER + INPUT RECEIVER)
+Goal: Desktop runtime that receives commands and renders environment
+
+Features:
+- Network input receiver (WebSocket or TCP)
+- Session manager for apps and UI states
+- Input injection layer (mouse + keyboard)
+- Desktop UI renderer (Swyft shell)
+- Performance scaling system for weak hardware
+
+Outcome:
+Desktop becomes a controllable, lightweight execution surface
+
+------------------------------------------------------------
+
+PHASE 7 — CROSS-DEVICE BRIDGE SYSTEM
+Goal: Unified communication between phone and desktop
+
+Features:
+- Secure connection pairing system
+- Real-time command streaming
+- Device discovery
+- Session persistence
+- Multi-device support (future)
+
+Outcome:
+Phone and desktop operate as one system
+
+------------------------------------------------------------
+
+PHASE 8 — THEMING SYSTEM
+Goal: Unified visual identity across all devices
+
+System design:
+- Abstract theme model shared across platforms
+- Platform-specific renderers:
+  - Android → Material You
+  - Desktop → Fluent UI style system
+
+Theme properties:
+- spacing scale
+- corner radius
+- color system
+- surface/material model
+- motion rules
+
+Outcome:
+Consistent design language across all environments
+
+------------------------------------------------------------
+
+ARCHITECTURE PRINCIPLES
+- Mobile and desktop are equal parts of the system
+- UI is declarative; logic is centralised via actions
+- Desktop environment is lightweight and adaptive
+- All communication is event-based
+- Platform-specific rendering is isolated at the edge
+- System prioritises performance on low-spec hardware
