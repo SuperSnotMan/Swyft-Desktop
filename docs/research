@@ -1,11 +1,243 @@
-Function name:
-launchApp
+# SwyftDesktop — Research & Development Notes
 
-Input:
-packageName (string)
+This document records the technical decisions, discoveries, failures, and architectural direction of the SwyftDesktop project.
 
-Job:
-Ask Android to open that app
+It is intended to be understandable even to readers without programming experience.
 
-Future use:
-Brave, Gmail, Outlook, Teams, etc.
+---
+
+# 1. Project Goal (What is being built)
+
+SwyftDesktop is a system that connects a mobile device and a desktop environment into a single interactive system.
+
+It aims to:
+
+- Turn a phone into a control hub
+- Run a custom desktop environment on a PC
+- Allow both devices to work together in real time
+- Keep the phone usable while controlling the desktop
+
+---
+
+# 2. Core Idea (Simple Explanation)
+
+Instead of:
+
+- Phone doing phone things
+- PC doing PC things
+
+The system makes:
+
+- Phone = controller + input device + app launcher
+- PC = display + execution environment
+
+Both are connected through a communication bridge.
+
+---
+
+# 3. System Structure
+
+The system is split into 3 layers:
+
+## 📱 Mobile Layer
+Handles:
+- App launching
+- User interface
+- Input (future: keyboard + trackpad)
+- Sending commands
+
+## 🌐 Bridge Layer
+Handles:
+- Communication between devices
+- Sending actions (like "open app")
+- Sending input (mouse, keyboard)
+
+## 💻 Desktop Layer
+Handles:
+- Custom desktop UI
+- Running applications
+- Displaying windows and widgets
+
+---
+
+# 4. What Has Been Built So Far (Mobile)
+
+## Working Features
+- Basic Android app created
+- Simple UI using buttons and layouts
+- Ability to launch apps using package names
+- App discovery using Android PackageManager (partial)
+
+## Problems Encountered
+- App list initially only showed a few system apps
+- UI was built using basic vertical layouts (not scalable)
+- Some Android functions require newer API levels than expected
+- Confusion around proper project structure in Android Studio
+
+---
+
+# 5. Key Fixes Learned
+
+## App Launching
+Apps are launched using:
+
+- Package name (example: `com.brave.browser`)
+- Android Intent system
+
+If the system cannot find the launch activity:
+- The app cannot be opened directly
+- A fallback error is required
+
+---
+
+## App Listing Issue
+Only showing a few apps happens because:
+
+- Some apps are not marked as "launcher apps"
+- Android filters apps using `CATEGORY_LAUNCHER`
+- System apps and restricted apps may be hidden
+
+---
+
+## UI Structure Issue
+Initial UI problems occurred because:
+
+- Multiple layouts were declared incorrectly
+- Views were added outside proper lifecycle scope
+- Android requires UI setup inside `onCreate()`
+
+---
+
+## Kotlin Compilation Errors
+Common causes:
+- Functions declared outside class scope
+- Incorrect braces placement
+- Missing or duplicated variables
+- Mixing UI logic and declarations incorrectly
+
+---
+
+# 6. Current Architecture Decision
+
+The project is moving away from:
+
+❌ Direct UI logic (buttons doing everything)
+
+Towards:
+
+✔ Action-based system
+
+Meaning:
+
+- UI triggers actions
+- Actions are handled centrally
+- Logic is separated from interface
+
+Example:
+
+User presses button → Action created → System executes action
+
+---
+
+# 7. Planned Mobile Improvements
+
+## App System
+- Grid-based app drawer (replacing vertical list)
+- App tiles with icons
+- Sorting and layout improvements
+
+## UI System
+- Reusable components
+- Home screen panels
+- Widget system (clock, shortcuts, system info)
+
+## Input System (Future)
+- Phone becomes trackpad
+- Phone becomes keyboard
+- Gesture controls
+
+---
+
+# 8. Desktop System (Future)
+
+A custom desktop environment will be created.
+
+It will include:
+
+- Custom taskbar
+- Window management system
+- Lightweight UI shell
+- App rendering system
+- Widget support
+
+It is designed to:
+- Run on low-spec devices
+- Avoid heavy system overhead
+- Replace or overlay existing desktop UI
+
+---
+
+# 9. Communication System (Critical Concept)
+
+Devices will communicate using:
+
+- Network connection (WiFi initially)
+- Event-based messages
+
+Example messages:
+
+- OPEN_APP: com.example.app
+- MOVE_MOUSE: x,y
+- CLICK: left/right
+- TYPE_KEY: A
+
+---
+
+# 10. Theme System (Planned)
+
+A shared theme model will control appearance across devices.
+
+- Android uses Material You style
+- Desktop uses Fluent UI style
+- Shared core theme defines:
+  - spacing
+  - colours
+  - corner rounding
+  - layout density
+
+---
+
+# 11. Major Insight So Far
+
+The system is not:
+
+- A launcher
+- A remote control app
+- A desktop clone
+
+It is:
+
+A distributed interface system connecting mobile and desktop into one controllable environment.
+
+---
+
+# 12. Current Status
+
+- Mobile prototype exists
+- App launching works
+- UI system is unstable but functional
+- Architecture is still being refined
+- Desktop system not started yet
+
+---
+
+# 13. Next Step Direction
+
+Focus remains on mobile system stability:
+
+1. Rebuild app drawer properly (grid system)
+2. Introduce action dispatcher
+3. Start widget framework
+4. Clean UI structure before expanding features
+
+---
