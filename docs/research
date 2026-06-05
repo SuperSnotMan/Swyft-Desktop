@@ -1,40 +1,272 @@
-# SwyftDesktop — Research & Development Notes
+SWYFTDESKTOP — RESEARCH & DEVELOPMENT NOTES
 
-This document records the technical decisions, discoveries, failures, and architectural direction of the SwyftDesktop project.
+PROJECT OVERVIEW
+SwyftDesktop is a system that connects a mobile phone and a desktop computer into one shared environment.
 
-It is intended to be understandable even to readers without programming experience.
+Phone acts as:
+- controller
+- input device
+- app launcher
 
----
+Desktop acts as:
+- workspace
+- app execution environment
+- custom interface shell
 
-# 1. Project Goal (What is being built)
+A communication bridge connects both devices so actions can be sent in real time.
 
-SwyftDesktop is a system that connects a mobile device and a desktop environment into a single interactive system.
+The goal is to create a lightweight desktop experience that works on many devices while keeping the phone usable at all times.
 
-It aims to:
+------------------------------------------------------------
 
-- Turn a phone into a control hub
-- Run a custom desktop environment on a PC
-- Allow both devices to work together in real time
-- Keep the phone usable while controlling the desktop
+CORE IDEA
 
----
+Instead of separate devices:
 
-# 2. Core Idea (Simple Explanation)
+Phone = control system
+Desktop = visual system
+Bridge = communication layer
 
-Instead of:
+Actions are sent between devices rather than manually performed on each device.
 
-- Phone doing phone things
-- PC doing PC things
+Example:
+Tap button on phone → send command → desktop opens app
 
-The system makes:
+------------------------------------------------------------
 
-- Phone = controller + input device + app launcher
-- PC = display + execution environment
+MOBILE SYSTEM STATUS
 
-Both are connected through a communication bridge.
+Current mobile app can:
+- launch apps using package names
+- display basic UI elements
+- partially list installed apps
 
----
+System is still in early prototype stage.
 
+------------------------------------------------------------
+
+HOW APP LAUNCHING WORKS
+
+Android apps are identified by package names such as:
+com.brave.browser
+
+To open an app, Android uses an Intent.
+
+------------------------------------------------------------
+CODE: OPENING AN APP
+
+Kotlin example with explanations:
+
+private fun launchApp(packageName: String) {
+
+    // Ask Android system for the launch entry point of the app
+    val intent = packageManager.getLaunchIntentForPackage(packageName)
+
+    // If null is returned, the app cannot be opened
+    if (intent == null) {
+
+        // Show error message to user
+        Toast.makeText(
+            this,
+            "Cannot launch app: $packageName",
+            Toast.LENGTH_LONG
+        ).show()
+
+        return
+    }
+
+    // Start app in a new task so it runs separately
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    // Launch the app
+    startActivity(intent)
+}
+
+------------------------------------------------------------
+
+HOW APP LISTING WORKS
+
+Android does not expose all apps directly.
+
+Only apps that declare themselves as launchable appear in results.
+
+------------------------------------------------------------
+CODE: GETTING APPS
+
+private fun getLaunchableApps(): List<AppInfo> {
+
+    // Create intent representing launcher apps
+    val intent = Intent(Intent.ACTION_MAIN, null)
+
+    // Filter only apps that appear in app drawer
+    intent.addCategory(Intent.CATEGORY_LAUNCHER)
+
+    // Ask system for matching apps
+    val apps = packageManager.queryIntentActivities(intent, 0)
+
+    // Convert system app data into simple readable objects
+    return apps.map { resolveInfo ->
+
+        AppInfo(
+            name = resolveInfo.loadLabel(packageManager).toString(),
+            packageName = resolveInfo.activityInfo.packageName
+        )
+    }
+}
+
+------------------------------------------------------------
+
+WHY ONLY SOME APPS SHOW
+
+Apps only appear if:
+- they are marked as launcher apps
+- they expose a main activity
+- system restrictions allow visibility
+
+This is why early testing showed only:
+- Settings
+- Play Store
+- Digital Wellbeing
+
+------------------------------------------------------------
+
+UI PROBLEMS FOUND
+
+Initial UI approach used:
+- LinearLayout
+- direct button creation
+
+Problems:
+- not scalable
+- becomes messy with many apps
+- difficult to style or extend
+
+Correct direction:
+- grid-based layout
+- reusable UI components
+- structured system design
+
+------------------------------------------------------------
+
+ARCHITECTURE CHANGE
+
+System is moving away from:
+
+UI directly doing actions
+
+To:
+
+UI → ACTION → SYSTEM HANDLER → RESULT
+
+This means UI only sends instructions, not logic.
+
+------------------------------------------------------------
+
+CODE: ACTION SYSTEM
+
+sealed class Action {
+    data class LaunchApp(val packageName: String) : Action()
+}
+
+------------------------------------------------------------
+
+CODE: ACTION HANDLER
+
+fun handleAction(action: Action) {
+
+    when (action) {
+
+        is Action.LaunchApp -> {
+            launchApp(action.packageName)
+        }
+    }
+}
+
+------------------------------------------------------------
+
+WHY THIS MATTERS
+
+Without this:
+- every button contains logic
+- system becomes messy and hard to scale
+
+With this:
+- UI is simple
+- logic is centralised
+- system is expandable into desktop environment
+
+------------------------------------------------------------
+
+DESKTOP ENVIRONMENT (FUTURE)
+
+Desktop system will include:
+- custom taskbar
+- window management system
+- app rendering layer
+- widget support
+- lightweight performance design
+
+It is not a launcher.
+It is a full custom desktop shell.
+
+------------------------------------------------------------
+
+COMMUNICATION SYSTEM
+
+Devices will communicate using simple messages:
+
+OPEN_APP: com.brave.browser
+MOVE_MOUSE: x,y
+CLICK: left or right
+TYPE_KEY: keyboard input
+
+This allows the phone to act as:
+- mouse
+- keyboard
+- control interface
+
+------------------------------------------------------------
+
+THEME SYSTEM
+
+Two UI systems:
+
+Android:
+- Material You style
+
+Desktop:
+- Fluent UI inspired style
+
+Shared properties:
+- spacing
+- colour system
+- corner radius
+- layout density
+
+------------------------------------------------------------
+
+CURRENT STATUS
+
+- Mobile prototype exists
+- App launching works
+- App list partially works
+- UI is unstable but functional
+- Architecture still being redesigned
+- Desktop system not started
+
+------------------------------------------------------------
+
+NEXT STEPS
+
+1. Fix app drawer using grid system
+2. Improve app discovery reliability
+3. Build proper UI components
+4. Expand action system
+5. Start widget framework
+
+------------------------------------------------------------
+
+END
 # 3. System Structure
 
 The system is split into 3 layers:
