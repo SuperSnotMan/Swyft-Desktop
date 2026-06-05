@@ -1,1 +1,11 @@
-will come soon
+Function name:
+launchApp
+
+Input:
+packageName (string)
+
+Job:
+Ask Android to open that app
+
+Future use:
+Brave, Gmail, Outlook, Teams, etc.
