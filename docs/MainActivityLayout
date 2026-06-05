@@ -1,0 +1,127 @@
+/*
+========================================================
+MENTAL MODEL: HOW THIS APP IS STRUCTURED
+========================================================
+
+This app is NOT a single block of code.
+It is a set of layers that work together.
+
+Think of it like this:
+
+1. Android System (outside your control)
+   - Knows installed apps
+   - Handles launching apps
+   - Provides PackageManager
+
+2. Your MainActivity (control centre)
+   - Builds UI
+   - Responds to clicks
+   - Talks to Android system
+
+3. Helper functions (tools)
+   - launchApp()
+   - getLaunchableApps()
+
+--------------------------------------------------------
+*/
+
+class MainActivity : AppCompatActivity() {
+
+    /*
+    ====================================================
+    LIFECYCLE ENTRY POINT
+    ====================================================
+
+    onCreate() runs when the app starts.
+
+    Think of it like:
+    "build everything and show it on screen"
+    */
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        /*
+        STEP 1: Create UI container
+        - LinearLayout = simple vertical stack
+        - Everything goes top to bottom
+        */
+        val layout = LinearLayout(this)
+        layout.orientation = LinearLayout.VERTICAL
+
+        /*
+        STEP 2: Get list of apps from Android system
+        */
+        val apps = getLaunchableApps()
+
+        /*
+        STEP 3: Turn apps into buttons
+        */
+        apps.forEach { app ->
+
+            val button = Button(this)
+            button.text = app.name
+
+            /*
+            STEP 4: When clicked, launch app using package name
+            */
+            button.setOnClickListener {
+                launchApp(app.packageName)
+            }
+
+            layout.addView(button)
+        }
+
+        /*
+        STEP 5: Show everything on screen
+        */
+        setContentView(layout)
+    }
+
+    /*
+    ====================================================
+    TOOL 1: LAUNCH AN APP
+    ====================================================
+    */
+    private fun launchApp(packageName: String) {
+
+        val intent = packageManager.getLaunchIntentForPackage(packageName)
+
+        if (intent == null) {
+            Toast.makeText(this, "Cannot launch: $packageName", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+    }
+
+    /*
+    ====================================================
+    TOOL 2: GET ALL LAUNCHABLE APPS
+    ====================================================
+    */
+    private fun getLaunchableApps(): List<AppInfo> {
+
+        val intent = Intent(Intent.ACTION_MAIN, null)
+        intent.addCategory(Intent.CATEGORY_LAUNCHER)
+
+        val apps = packageManager.queryIntentActivities(intent, 0)
+
+        return apps.map {
+            AppInfo(
+                name = it.loadLabel(packageManager).toString(),
+                packageName = it.activityInfo.packageName
+            )
+        }
+    }
+}
+
+/*
+========================================================
+DATA MODEL: SIMPLE APP REPRESENTATION
+========================================================
+*/
+data class AppInfo(
+    val name: String,
+    val packageName: String
+)
