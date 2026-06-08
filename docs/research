@@ -244,7 +244,20 @@ Shared properties:
 - layout density
 
 ------------------------------------------------------------
+CONVERSION METHODS
 
+KOTLIN NOTE
+
+List size:
+list.size
+
+String interpolation:
+"Value = $variable"
+
+Expression interpolation:
+"Value = ${expression}"
+
+------------------------------------------------------------
 CURRENT STATUS
 
 - Mobile prototype exists
