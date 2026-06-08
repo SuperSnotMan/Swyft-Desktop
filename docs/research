@@ -1,187 +1,206 @@
-Swyft Desktop — Research & Development Log
+SWYFT DESKTOP - RESEARCH LOG (ANDROID LAUNCHER CORE)
+Date: Development Day 2-3 Session
+Platform: Android (Kotlin, AppCompatActivity)
+Status: Working prototype launcher with grid UI
 
-Overview
-This project explores building a hybrid mobile-to-desktop launcher system on Android. The goal is to create a desktop-like environment that runs on mobile devices while still allowing full access to installed applications.
+------------------------------------------------------------
+1. PROJECT OVERVIEW
+------------------------------------------------------------
 
-Core concept:
-- Mobile device acts as a launcher + control layer
-- Future expansion toward PC companion interface
-- Desktop-style UI rendered using native Android views
+Swyft Desktop is a hybrid system designed to:
 
-Core Architecture (Current State)
+- Turn an Android phone into a desktop-style environment
+- Provide a grid-based app launcher similar to desktop OS design
+- Eventually connect to a PC client for remote desktop interaction
+- Maintain phone usability while providing a separate “desktop layer”
 
-UI Hierarchy:
-ScrollView
-   └ GridLayout
-        ├ Button (App tile)
-        ├ Button (App tile)
-        ├ Button (App tile)
+Current focus:
+- Mobile launcher system (fully working)
+- App listing + launching system
+- UI grid layout with icons and labels
 
-Key Design Decisions:
-- ScrollView handles vertical overflow
-- GridLayout creates desktop-style multi-column layout
-- Buttons represent apps (temporary placeholder for icon tiles)
-- 4-column grid chosen for desktop-like layout on mobile
+Future systems (not implemented yet):
+- PC desktop environment (Windows client)
+- Phone-as-input device (trackpad/keyboard mode)
+- Remote app launching / sync system
 
-App Discovery System
+------------------------------------------------------------
+2. CURRENT IMPLEMENTATION SUMMARY
+------------------------------------------------------------
 
-Function: Get Installed Apps
+WORKING FEATURES:
 
-val intent = Intent(Intent.ACTION_MAIN, null).apply {
-    addCategory(Intent.CATEGORY_LAUNCHER)
-}
+- Full app list retrieval using PackageManager
+- Filtering launchable apps using ACTION_MAIN + CATEGORY_LAUNCHER
+- Alphabetical sorting of apps
+- Grid-based UI using GridLayout
+- Scrollable launcher using ScrollView
+- App launching via package manager intent
+- Icon + label rendering per app tile
+- Responsive 4-column grid layout
+- Fixed tile sizing for consistent UI
+- Proper text truncation (no overflow issues)
+- Clean icon scaling system
 
-val apps = packageManager.queryIntentActivities(intent, 0)
+------------------------------------------------------------
+3. APP RETRIEVAL SYSTEM
+------------------------------------------------------------
 
-return apps.map {
-    AppInfo(
-        name = it.loadLabel(packageManager).toString(),
-        packageName = it.activityInfo.packageName
-    )
-}
+Apps are retrieved using Android PackageManager:
 
-Explanation:
-- Uses Android PackageManager to retrieve launchable apps
-- Filters apps that appear in launcher
-- Converts system ResolveInfo objects into AppInfo model
+Intent filter used:
+- ACTION_MAIN
+- CATEGORY_LAUNCHER
 
-Key Learning:
-Android 11+ requires <queries> in AndroidManifest.xml to access full app list.
+This ensures only launchable apps appear in the launcher.
 
-App Rendering System
+Result processing:
+- ResolveInfo objects converted into AppInfo model
+- AppInfo stores:
+  - app name
+  - package name
+  - app icon drawable
 
-private fun renderApps(layout: GridLayout, apps: List<AppInfo>) {
-    apps.forEach { app ->
-        layout.addView(createAppButton(app))
-    }
-}
-
-Purpose:
-- Dynamically generates UI elements from installed apps
-- Connects data layer to UI layer
-
-App Tile Creation System
-
-private fun createAppButton(app: AppInfo): Button {
-    return Button(this).apply {
-        text = app.name
-
-        setOnClickListener {
-            launchApp(app.packageName)
-        }
-
-        val params = GridLayout.LayoutParams().apply {
-            width = 0
-            height = GridLayout.LayoutParams.WRAP_CONTENT
-            columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-        }
-
-        layoutParams = params
-    }
-}
-
-Key Concepts:
-- Each app becomes a Button
-- Buttons are generated dynamically at runtime
-- GridLayout.LayoutParams controls grid behaviour
-- width = 0 enables equal column distribution
-- weight system ensures 4-column layout
-
-Layout System Fixes
-
-Issue:
-- Buttons not sizing correctly
-- Some apps invisible due to layout collapse
-
-Fix:
-- Added height = WRAP_CONTENT
-- Correct GridLayout.LayoutParams usage
-
-Scroll System Implementation
-
-val scrollView = ScrollView(this)
-scrollView.addView(grid)
-setContentView(scrollView)
+Sorting:
+- Alphabetical sorting applied using:
+  name.lowercase()
 
 Result:
-- Full vertical scrolling enabled
-- Supports 100+ apps without clipping
+- Stable, predictable app ordering in UI
 
-System Insets Handling
+------------------------------------------------------------
+4. UI ARCHITECTURE
+------------------------------------------------------------
 
-ViewCompat.setOnApplyWindowInsetsListener(grid) { view, insets ->
-    val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+LAYOUT STRUCTURE:
 
-    view.setPadding(
-        systemBars.left,
-        systemBars.top,
-        systemBars.right,
-        systemBars.bottom
-    )
-    insets
-}
+ScrollView
+  └── GridLayout (columnCount = 4)
+        └── App Tile (LinearLayout)
+              ├── ImageButton (icon)
+              └── TextView (label)
 
-Purpose:
-- Prevents overlap with status bar and navigation gestures
-- Ensures UI remains usable on all devices
+Design decisions:
 
-App Launch System
+- ScrollView used to handle large app lists
+- GridLayout used for structured desktop-like layout
+- Each app tile is a self-contained LinearLayout
+- Icons and labels are vertically stacked
 
-val intent = packageManager.getLaunchIntentForPackage(packageName)
+Tile behaviour:
+- Fixed height (approx 220dp equivalent)
+- Fixed icon size (approx 96px equivalent)
+- Label constrained to single line with ellipsis
 
-if (intent == null) {
-    Toast.makeText(this, "Can't launch $packageName", Toast.LENGTH_SHORT).show()
-    return
-}
+------------------------------------------------------------
+5. TILE DESIGN SYSTEM
+------------------------------------------------------------
 
-startActivity(intent)
+Each app tile contains:
+
+ICON:
+- ImageButton
+- Uses app system icon
+- ScaleType: CENTER_CROP
+- Transparent background
+- Fixed size for consistency
+
+LABEL:
+- TextView under icon
+- Font size: 12sp
+- Max lines: 1
+- Ellipsis applied for overflow
+
+CONTAINER:
+- LinearLayout (vertical)
+- Center gravity alignment
+- Padding applied for spacing
+- Click area triggers app launch
+
+------------------------------------------------------------
+6. GRID SYSTEM BEHAVIOUR
+------------------------------------------------------------
+
+GridLayout configuration:
+
+- 4 columns fixed
+- Each tile width = 0 + weight distribution
+- Uniform row height enforced
+- ScrollView wraps entire grid
+
+Result:
+- Consistent desktop-style grid layout
+- Predictable spacing between app tiles
+- No overlap or clipping issues after fixes
+
+------------------------------------------------------------
+7. APP LAUNCH SYSTEM
+------------------------------------------------------------
+
+Launch method:
+
+- Uses PackageManager.getLaunchIntentForPackage()
+- Validates intent exists before launching
+- Falls back with Toast error if app cannot launch
 
 Behaviour:
-- Safely resolves app launch intent
-- Prevents crashes if app is not launchable
-- Launches external applications via system
+- Opens apps in new task
+- Does not interfere with launcher activity
 
-Issues Resolved Today
+------------------------------------------------------------
+8. PROBLEMS ENCOUNTERED + RESOLUTIONS
+------------------------------------------------------------
 
-1. App visibility restriction (Android 11+)
-Fix: Added <queries> in manifest
+ISSUE 1: Only system apps appearing
+CAUSE: Incorrect intent filtering
+FIX: Ensured CATEGORY_LAUNCHER usage
 
-2. Scroll not working
-Fix: ScrollView wrapper added
+ISSUE 2: App list incomplete
+CAUSE: Improper query or missing launcher category
+FIX: Fixed resolveInfo mapping
 
-3. Grid sizing broken
-Fix: LayoutParams corrected (width=0 + weight)
+ISSUE 3: Grid not scrolling
+CAUSE: Missing ScrollView wrapper
+FIX: Wrapped GridLayout inside ScrollView
 
-4. Invisible buttons
-Fix: Added proper height handling
+ISSUE 4: Icons too large / UI broken
+CAUSE: No size constraints on ImageButton
+FIX: Fixed icon size and container height
 
-Current Status
+ISSUE 5: Text overflow
+CAUSE: Labels not constrained
+FIX: ellipsize + maxLines = 1
 
-Working Features:
-- Installed app detection
-- Dynamic UI generation
-- Grid layout (4 columns)
-- Scrollable interface
-- App launching system
-- System inset handling
+ISSUE 6: Layout instability
+CAUSE: Missing layout params per tile
+FIX: Explicit GridLayout.LayoutParams added
 
-Limitations:
-- No icons (text only buttons)
-- No visual tiles yet
-- No search bar
-- No app grouping
-- No drag & drop
+------------------------------------------------------------
+9. CURRENT LIMITATIONS
+------------------------------------------------------------
 
-Next Goals:
-- Replace buttons with icon tiles
-- Add spacing system
-- Add search functionality
-- Adaptive grid sizing
-- Desktop-style UI polish
+- No adaptive layout (fixed 4-column grid)
+- No search functionality
+- No folders or grouping system
+- No long press actions (uninstall/info)
+- No animation or transitions
+- Static UI styling (no theme system yet)
 
-Core Learning:
-- GridLayout requires explicit sizing rules
-- PackageManager is restricted on Android 11+
-- ScrollView handles overflow only
-- LayoutParams define behaviour, not appearance
-- UI structure must be correct before logic
+These are intentionally deferred to keep core stable.
+
+------------------------------------------------------------
+10. NEXT PHASE OPTIONS (NOT IMPLEMENTED)
+
+Possible next development directions:
+
+- Adaptive grid system (phone vs tablet scaling)
+- Icon styling improvements (rounded backgrounds, padding system)
+- Desktop top bar (time, status, quick actions)
+- App categorisation system
+- PC client integration layer
+- Remote input system (phone as trackpad/keyboard)
+- Theme system (Android vs Windows-style UI skins)
+
+------------------------------------------------------------
+END OF RESEARCH LOG
+------------------------------------------------------------
